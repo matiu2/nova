@@ -1036,3 +1036,16 @@ class InstanceFault(BASE, NovaBase):
     code = Column(Integer(), nullable=False)
     message = Column(String(255))
     details = Column(Text)
+
+
+class InstanceActionLog(BASE, NovaBase):
+    __tablename__ = 'instance_action_log'
+    id = Column(Integer(), primary_key=True, autoincrement=True)
+    instance_uuid = Column(String(36),
+                           ForeignKey('instances.uuid'),
+                           nullable=False)
+    action_name = Column(String(255), nullable=False)
+    requesting_ip = Column(String(255), nullable=False)
+    response_code = Column(Integer, nullable=False)
+    project_id = Column(Text, nullable=False)
+    user_id = Column(Text, nullable=False)

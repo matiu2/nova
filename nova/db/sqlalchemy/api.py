@@ -5093,3 +5093,21 @@ def instance_fault_get_by_instance_uuids(context, instance_uuids):
         output[row['instance_uuid']].append(data)
 
     return output
+
+###################
+
+def instance_action_log_create(context, values):
+    """Create a new instance_action_log"""
+    action_log = models.InstanceActionLog()
+    action_log.update(values)
+    action_log.save()
+    return dict(action_log.iteritems())
+
+def instance_action_log_get_by_instance_uuid(context, instance_uuid):
+    """Get instance action logs for an instance by it's uuid
+    Returns all log entries, sorted by date"""
+    rows = model_query(context, models.InstanceActionLog, read_deleted='no').\
+                       filter(models.InstanceActionLog.instance_uuid == instance_uuid).\
+                       order_by(desc("created_at")).\
+                       all()
+    return [dict(row.iteritems()) for row in rows]

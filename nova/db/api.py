@@ -1910,3 +1910,14 @@ def instance_fault_create(context, values):
 def instance_fault_get_by_instance_uuids(context, instance_uuids):
     """Get all instance faults for the provided instance_uuids."""
     return IMPL.instance_fault_get_by_instance_uuids(context, instance_uuids)
+
+###################
+
+def instance_action_log_create(context, values):
+    """Create a new instance_action_log"""
+    return IMPL.instance_action_log_create(context, values)
+
+def instance_action_log_get_by_instance_uuid(context, values):
+    """Get instance action logs for an instance by it's uuid
+    Returns all log entries, sorted by date"""
+    return IMPL.instance_action_log_get_by_instance_uuid(context, values)
