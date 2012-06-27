@@ -1049,3 +1049,4 @@ class InstanceActionLog(BASE, NovaBase):
     response_code = Column(Integer, nullable=False)
     project_id = Column(Text, nullable=False)
     user_id = Column(Text, nullable=False)
+    extra = Column(Text)

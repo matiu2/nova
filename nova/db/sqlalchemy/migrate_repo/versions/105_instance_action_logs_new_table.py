@@ -43,6 +43,7 @@ def upgrade(migrate_engine):
         Column('response_code', Integer, nullable=False),
         Column('project_id', Text, nullable=False),
         Column('user_id', Text, nullable=False),
+        Column('extra', Text),
         mysql_engine='InnoDB',
         mysql_charset='utf8'
     )
