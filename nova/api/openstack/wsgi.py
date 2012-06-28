@@ -858,6 +858,10 @@ class Resource(wsgi.Application):
             resp_obj = None
             if type(action_result) is dict or action_result is None:
                 resp_obj = ResponseObject(action_result)
+            elif isinstance(action_result, wsgi.webob.Response):
+                resp_obj = ResponseObject(None, code=action_result.status_int)
+                for k, v in action_result.headers.items():
+                    resp_obj[k] = v
             elif isinstance(action_result, ResponseObject):
                 resp_obj = action_result
             else:
