@@ -836,7 +836,6 @@ class Controller(wsgi.Controller):
         except Exception, e:
             LOG.exception(_("Error in revert-resize %s"), e)
             raise exc.HTTPBadRequest()
-        return webob.Response(status_int=202)
 
     @wsgi.response(202)
     @wsgi.serializers(xml=FullServerTemplate)
@@ -866,7 +865,6 @@ class Controller(wsgi.Controller):
         except Exception, e:
             LOG.exception(_("Error in reboot %s"), e, instance=instance)
             raise exc.HTTPUnprocessableEntity()
-        return webob.Response(status_int=202)
 
     def _resize(self, req, instance_id, flavor_id, **kwargs):
         """Begin the resize process with given instance/flavor."""
@@ -884,8 +882,6 @@ class Controller(wsgi.Controller):
         except exception.InstanceInvalidState as state_error:
             common.raise_http_conflict_for_instance_invalid_state(state_error,
                     'resize')
-
-        return webob.Response(status_int=202)
 
     @wsgi.response(204)
     def delete(self, req, id):
@@ -949,7 +945,6 @@ class Controller(wsgi.Controller):
             raise exc.HTTPBadRequest(explanation=msg)
         server = self._get_server(context, id)
         self.compute_api.set_admin_password(context, server, password)
-        return webob.Response(status_int=202)
 
     def _limit_items(self, items, req):
         return common.limited_by_marker(items, req)
@@ -982,7 +977,7 @@ class Controller(wsgi.Controller):
         if 'auto_disk_config' in body['resize']:
             kwargs['auto_disk_config'] = body['resize']['auto_disk_config']
 
-        return self._resize(req, id, flavor_ref, **kwargs)
+        self._resize(req, id, flavor_ref, **kwargs)
 
     @wsgi.response(202)
     @wsgi.serializers(xml=FullServerTemplate)
@@ -1121,8 +1116,8 @@ class Controller(wsgi.Controller):
                                  'images',
                                  image_id)
 
-        resp = webob.Response(status_int=202)
-        resp.headers['Location'] = image_ref
+        resp = wsgi.ResponseObject(None, 202)
+        resp['Location'] = image_ref
         return resp
 
     def _get_server_admin_password(self, server):

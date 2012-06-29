@@ -650,7 +650,7 @@ class Resource(wsgi.Application):
         """Registers controller extensions with this resource."""
 
         extensions = getattr(controller, 'wsgi_extensions', [])
-        for method_name, action_name in extensions:
+        for method_name, action_name, wants_errors in extensions:
             # Look up the extending method
             extension = getattr(controller, method_name)
 
@@ -752,8 +752,14 @@ class Resource(wsgi.Application):
 
     def post_process_extensions(self, extensions, resp_obj, request,
                                 action_args):
+        error_occured = resp_obj.code >= 300
         for ext in extensions:
             response = None
+            if error_occured:
+                # holds, method_name, action_name, wants_errors
+                wants_errors = ext.wsgi_extends[2]
+                if not wants_errors:
+                    continue
             if inspect.isgenerator(ext):
                 # If it's a generator, run the second half of
                 # processing
@@ -845,31 +851,37 @@ class Resource(wsgi.Application):
         response, post = self.pre_process_extensions(extensions,
                                                      request, action_args)
 
+        resp_obj = None
         if not response:
+            # Call the actual api method
             try:
                 with ResourceExceptionHandler():
                     action_result = self.dispatch(meth, request, action_args)
             except Fault as ex:
-                response = ex
+                action_result = ex
 
-        if not response:
             # No exceptions; convert action_result into a
             # ResponseObject
-            resp_obj = None
             if type(action_result) is dict or action_result is None:
                 resp_obj = ResponseObject(action_result)
             elif isinstance(action_result, wsgi.webob.Response):
-                resp_obj = ResponseObject(None, code=action_result.status_int)
+                resp_obj = ResponseObject(action_result.body,
+                        code=action_result.status_int)
                 for k, v in action_result.headers.items():
                     resp_obj[k] = v
+            elif isinstance(action_result, Fault):
+                resp_obj = ResponseObject(None, code=action_result.status_int)
             elif isinstance(action_result, ResponseObject):
                 resp_obj = action_result
             else:
-                response = action_result
+                # If this gets hit, the method has broken the contract
+                # and returned something unexpected
+                resp_obj = ResponseObject(action_result)
 
             # Run post-processing extensions
-            if resp_obj:
-                _set_request_id_header(request, resp_obj)
+            error_occured = resp_obj.code >= 300
+            _set_request_id_header(request, resp_obj)
+            if not error_occured:
                 # Do a preserialize to set up the response object
                 serializers = getattr(meth, 'wsgi_serializers', {})
                 resp_obj._bind_method_serializers(serializers)
@@ -877,13 +889,13 @@ class Resource(wsgi.Application):
                     resp_obj._default_code = meth.wsgi_code
                 resp_obj.preserialize(accept, self.default_serializers)
 
-                # Process post-processing extensions
-                response = self.post_process_extensions(post, resp_obj,
-                                                        request, action_args)
+            # Process post-processing extensions
+            response = self.post_process_extensions(post, resp_obj,
+                                                    request, action_args)
 
-            if resp_obj and not response:
+            if not response:
                 response = resp_obj.serialize(request, accept,
-                                              self.default_serializers)
+                        self.default_serializers)
 
         try:
             msg_dict = dict(url=request.url, status=response.status_int)
@@ -959,11 +971,21 @@ def extends(*args, **kwargs):
         @extends(action='resize')
         def _action_resize(...):
             pass
+
+    or as::
+
+        @extends(action='resize', wants_errors=True)
+        def _action_resize(...):
+            pass
+
+    if 'wants_errors' is True, the extension will be called even if the api
+    call failed.
     """
 
     def decorator(func):
         # Store enough information to find what we're extending
-        func.wsgi_extends = (func.__name__, kwargs.get('action'))
+        func.wsgi_extends = (func.__name__, kwargs.get('action'),
+                kwargs.get('wants_errors', False))
         return func
 
     # If we have positional arguments, call the decorator
