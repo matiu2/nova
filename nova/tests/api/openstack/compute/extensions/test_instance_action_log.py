@@ -87,7 +87,10 @@ class InstanceActionLogTest(test.TestCase):
         )
 
     def test_delete(self):
-        pass
+        req = self._makeReq()
+        resp_obj = FakeResponse(200)
+        self.controller.delete(req, self.uuid, resp_obj)
+        self._checkResult('delete')
 
     def test_password(self):
         pass
