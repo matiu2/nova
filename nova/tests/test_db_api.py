@@ -301,6 +301,28 @@ class DbApiTestCase(test.TestCase):
         expected = {uuids[0]: [], uuids[1]: []}
         self.assertEqual(expected, instance_faults)
 
+    def test_instance_action_log_create(self):
+        ctxt = context.get_admin_context()
+        uuid = str(utils.gen_uuid())
+        # Create an instancegt
+        action_log = {
+            'instance_uuid': uuid,
+            'action_name': 'test action',
+            'requesting_ip': '1.2.3.4',
+            'response_code': 202,
+            'project_id': 'my_awesome_project',
+            'user_id': 'mister_cool',
+        }
+        db.instance_action_log_create(ctxt, action_log)
+        # Retrieve the action_log to ensure it was successfully added
+        action_logs = db.instance_action_log_get_by_instance_uuid(ctxt, uuid)
+        self.assertEqual(len(action_logs), 1)
+        self.assertEqual(202, action_logs[0]['response_code'])
+        self.assertEqual('test action', action_logs[0]['action_name'])
+        self.assertEqual(uuid, action_logs[0]['instance_uuid'])
+        self.assertEqual('my_awesome_project', action_logs[0]['project_id'])
+        self.assertEqual('mister_cool', action_logs[0]['user_id'])
+
     def test_dns_registration(self):
         domain1 = 'test.domain.one'
         domain2 = 'test.domain.two'
