@@ -22,7 +22,7 @@ from nova.db.api import instance_action_log_create
 import pprint
 
 ALIAS = 'OS-IAL' # Instance Action Log
-XMLNS_DCF = "http://docs.openstack.org/compute/ext/instance_action_log/api/v2.0"
+XMLNS_IAL = "http://docs.openstack.org/compute/ext/instance_action_log/api/v2.0"
 authorize = extensions.soft_extension_authorizer('compute', 'action_instance_log')
 
 
@@ -55,7 +55,11 @@ class InstanceActionLogController(wsgi.Controller):
     @wsgi.extends(wants_errors=True)
     def create(self, req, body, resp_obj):
         extra = pprint.pformat(body['server'])
-        self._do_log(req, resp_obj, 'create', resp_obj.obj['server']['id'], extra)
+        if resp_obj.obj:
+            server_uuid = resp_obj.obj['server']['id']
+        else:
+            server_uuid = None
+        self._do_log(req, resp_obj, 'create', server_uuid, extra)
 
     @wsgi.extends(wants_errors=True)
     def delete(self, req, id, resp_obj):
@@ -69,10 +73,6 @@ class InstanceActionLogController(wsgi.Controller):
     def _action_resize(self, req, id, body, resp_obj):
         extra = u'New Flavor: %s' % body['resize']['flavorRef']
         self._do_log(req, resp_obj, 'resize', id, extra)
-
-    @wsgi.extends(wants_errors=True)
-    def delete(self, req, resp_obj, id):
-        self._do_log(req, resp_obj, 'delete', id)
 
     @wsgi.extends(action='rebuild', wants_errors=True)
     def _action_rebuild(self, req, id, body, resp_obj):
@@ -104,7 +104,7 @@ class Instance_action_log(extensions.ExtensionDescriptor):
 
     name = "InstanceActionLog"
     alias = ALIAS
-    namespace = XMLNS_DCF
+    namespace = XMLNS_IAL
     updated = "2012-06-23T00:00:00+00:00"
 
     def get_controller_extensions(self):

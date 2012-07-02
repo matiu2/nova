@@ -43,33 +43,87 @@ class InstanceActionLogTest(test.TestCase):
     def setUp(self):
         super(InstanceActionLogTest, self).setUp()
         self.controller = InstanceActionLogController()
+        self.user = 'mister cool'
+        self.project = 'cool project'
+        self.remoteIP = '1.2.3.4'
+        self.uuid = 'abcdefg'
 
-    def test_create(self):
+    def _makeReq(self):
         req = fakes.HTTPRequest.blank('/v2/fake/servers/create')
         req._headers = {
-            'X-Auth-User': 'mister cool',
-            'X-Auth-Project-Id': 'cool project'
+            'X-Auth-User': self.user,
+            'X-Auth-Project-Id': self.project,
         }
-        req.environ['REMOTE_ADDR'] = '1.2.3.4'
+        req.environ['REMOTE_ADDR'] = self.remoteIP
+        return req
+
+    def _checkResult(self, action_name, expected_response_code=200):
+        result = instance_action_log_get_by_instance_uuid(
+            FakeContext(), self.uuid)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['instance_uuid'], self.uuid)
+        self.assertEqual(result[0]['user_id'], self.user)
+        self.assertEqual(result[0]['project_id'], self.project)
+        self.assertEqual(result[0]['action_name'], action_name)
+        # Must have been logged in last 60 seconds..
+        self.assert_(datetime.now() - result[0]['created_at'] < timedelta(0,60))
+        self.assertEqual(result[0]['response_code'], expected_response_code)
+        self.assertEqual(result[0]['requesting_ip'], self.remoteIP)
+        return result
+
+    def test_create(self):
+        req = self._makeReq()
         body = {'server':
                 {'ip': '1.2.3.4',
                  'name': 'a server',
                  'info': 'this all gets logged',
                 }}
-        resp_obj = FakeResponse(200, {'server': {'id': '1234'}})
+        resp_obj = FakeResponse(200, {'server': {'id': self.uuid}})
         self.controller.create(req, body, resp_obj)
-        result = instance_action_log_get_by_instance_uuid(
-            FakeContext(), '1234')
-        self.assertEqual(len(result), 1)
+        result = self._checkResult('create')
         self.assertEqual(result[0]['extra'], \
             "{'info': 'this all gets logged', "
             "'ip': '1.2.3.4', 'name': 'a server'}"
         )
-        self.assertEqual(result[0]['instance_uuid'], '1234')
-        self.assertEqual(result[0]['user_id'], 'mister cool')
-        self.assertEqual(result[0]['project_id'], 'cool project')
-        self.assertEqual(result[0]['action_name'], 'create')
-        # Must have been logged in last 60 seconds..
-        self.assert_(datetime.now() - result[0]['created_at'] < timedelta(0,60))
-        self.assertEqual(result[0]['response_code'], 200)
-        self.assertEqual(result[0]['requesting_ip'], '1.2.3.4')
+
+    def test_delete(self):
+        pass
+
+    def test_password(self):
+        pass
+
+    def test_resize(self):
+        pass
+
+    def test_rebuild(self):
+        pass
+
+    def test_create_image(self):
+        pass
+
+    def test_reboot(self):
+        pass
+
+    def test_resize(self):
+        pass
+
+    def test_revert_resize(self):
+        pass
+
+    def test_confirm_resize(self):
+        pass
+
+    def test_rescue(self):
+        pass
+
+    def test_unrescue(self):
+        pass
+
+    def test_clearState(self):
+        pass
+
+    def test_addIP(self):
+        pass
+
+    def test_removeIP(self):
+        pass
