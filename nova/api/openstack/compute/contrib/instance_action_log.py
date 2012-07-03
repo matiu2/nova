@@ -81,13 +81,13 @@ class InstanceActionLogController(wsgi.Controller):
 
     @wsgi.extends(action='createImage', wants_errors=True)
     def _action_create_image(self, req, id, body, resp_obj):
-        extra = u'name: %s\n' % body['createImage']['name']
-        extra += u'metadata: %s' % pformat(body['createImage']['metadata'])
+        extra = u'Name: %s\n' % body['createImage']['name']
+        extra += u'Metadata: %s' % pprint.pformat(body['createImage']['metadata'])
         self._do_log(req, resp_obj, 'volume-snapshot-create', id, extra)
 
     @wsgi.extends(action='reboot', wants_errors=True)
     def _action_reboot(self, req, id, body, resp_obj):
-        extra = u'type: %s' % body['reboot']['type']
+        extra = u'Type: %s' % body['reboot']['type']
         self._do_log(req, resp_obj, 'reboot', id, extra)
 
     @wsgi.extends(action='confirmResize', wants_errors=True)

@@ -93,28 +93,70 @@ class InstanceActionLogTest(test.TestCase):
         self._checkResult('delete')
 
     def test_password(self):
-        pass
+        req = self._makeReq()
+        resp_obj = FakeResponse(200)
+        self.controller._action_change_password(req, self.uuid, {}, resp_obj)
+        self._checkResult('root-password')
 
     def test_resize(self):
-        pass
+        req = self._makeReq()
+        body = {'resize': {'flavorRef': '400' }}
+        resp_obj = FakeResponse(200)
+        self.controller._action_resize(req, self.uuid, body, resp_obj)
+        result = self._checkResult('resize')
+        self.assertEqual(result[0]['extra'], \
+            'New Flavor: 400'
+        )
 
     def test_rebuild(self):
-        pass
+        req = self._makeReq()
+        body = {'rebuild': {'imageRef': '700' }}
+        resp_obj = FakeResponse(200)
+        self.controller._action_rebuild(req, self.uuid, body, resp_obj)
+        result = self._checkResult('rebuild')
+        self.assertEqual(result[0]['extra'], \
+            'New Image: 700'
+        )
 
     def test_create_image(self):
-        pass
+        req = self._makeReq()
+        body = {'createImage': {'name': 'my awesome image',
+                                'metadata': {'true?': 'yes'}}}
+        resp_obj = FakeResponse(200)
+        self.controller._action_create_image(req, self.uuid, body, resp_obj)
+        result = self._checkResult('volume-snapshot-create')
+        self.assertEqual(result[0]['extra'], \
+            "Name: my awesome image\n"
+            "Metadata: {'true?': 'yes'}"
+        )
 
-    def test_reboot(self):
-        pass
+    def test_reboot_soft(self):
+        req = self._makeReq()
+        body = {'reboot': {'type': 'soft'}}
+        resp_obj = FakeResponse(200)
+        self.controller._action_reboot(req, self.uuid, body, resp_obj)
+        result = self._checkResult('reboot')
+        self.assertEqual(result[0]['extra'], "Type: soft")
 
-    def test_resize(self):
-        pass
-
-    def test_revert_resize(self):
-        pass
+    def test_reboot_hard(self):
+        req = self._makeReq()
+        body = {'reboot': {'type': 'hard'}}
+        resp_obj = FakeResponse(200)
+        self.controller._action_reboot(req, self.uuid, body, resp_obj)
+        result = self._checkResult('reboot')
+        self.assertEqual(result[0]['extra'], "Type: hard")
 
     def test_confirm_resize(self):
-        pass
+        req = self._makeReq()
+        resp_obj = FakeResponse(200)
+        self.controller._action_confirm_resize(req, self.uuid, {}, resp_obj)
+        self._checkResult('confirm-resize')
+
+    def test_revert_resize(self):
+        req = self._makeReq()
+        resp_obj = FakeResponse(200)
+        self.controller._action_revert_resize(req, self.uuid, {}, resp_obj)
+        self._checkResult('revert-resize')
 
     def test_rescue(self):
         pass
@@ -129,4 +171,19 @@ class InstanceActionLogTest(test.TestCase):
         pass
 
     def test_removeIP(self):
+        pass
+
+    def powerOn(self):
+        pass
+
+    def powerOff(self):
+        pass
+
+    def migrate(self):
+        pass
+
+    def suspend(self):
+        pass
+
+    def unsuspend(self):
         pass
