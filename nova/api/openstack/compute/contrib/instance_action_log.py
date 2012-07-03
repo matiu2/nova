@@ -16,10 +16,10 @@
 
 """Logs actions performed on instances"""
 
+import pprint
 from nova.api.openstack import extensions
 from nova.api.openstack import wsgi
-from nova.db.api import instance_action_log_create
-import pprint
+from nova import db
 
 ALIAS = 'OS-IAL' # Instance Action Log
 XMLNS_IAL = "http://docs.openstack.org/compute/ext/instance_action_log/api/v2.0"
@@ -50,7 +50,7 @@ class InstanceActionLogController(wsgi.Controller):
             'extra': extra,
         }
         context = req.environ['nova.context']
-        instance_action_log_create(context, instance_action_log)
+        db.api.instance_action_log_create(context, instance_action_log)
 
     @wsgi.extends(wants_errors=True)
     def create(self, req, body, resp_obj):

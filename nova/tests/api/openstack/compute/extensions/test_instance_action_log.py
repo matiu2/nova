@@ -15,13 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from datetime import timedelta, datetime
+import datetime
+from nova.api.openstack.compute.contrib import instance_action_log
+from nova.db.api import instance_action_log_get_by_instance_uuid
+from nova import context
 from nova import test
 from nova.tests.api.openstack import fakes
-from nova.context import RequestContext
-from nova.api.openstack.compute.contrib.instance_action_log import \
-     InstanceActionLogController
-from nova.db.api import instance_action_log_get_by_instance_uuid
 
 
 class FakeResponse(object):
@@ -32,7 +31,7 @@ class FakeResponse(object):
         self.obj = obj
 
 
-class FakeContext(RequestContext):
+class FakeContext(context.RequestContext):
 
     def __init__(self, user_name='fake_admin', project='fake_project'):
         super(FakeContext, self).__init__(user_name, project, is_admin=True)
@@ -42,7 +41,7 @@ class InstanceActionLogTest(test.TestCase):
 
     def setUp(self):
         super(InstanceActionLogTest, self).setUp()
-        self.controller = InstanceActionLogController()
+        self.controller = instance_action_log.InstanceActionLogController()
         self.user = 'mister cool'
         self.project = 'cool project'
         self.remoteIP = '1.2.3.4'
@@ -66,7 +65,8 @@ class InstanceActionLogTest(test.TestCase):
         self.assertEqual(result[0]['project_id'], self.project)
         self.assertEqual(result[0]['action_name'], action_name)
         # Must have been logged in last 60 seconds..
-        self.assert_(datetime.now() - result[0]['created_at'] < timedelta(0,60))
+        self.assert_(datetime.datetime.now() - result[0]['created_at'] <
+            datetime.timedelta(0,60))
         self.assertEqual(result[0]['response_code'], expected_response_code)
         self.assertEqual(result[0]['requesting_ip'], self.remoteIP)
         return result

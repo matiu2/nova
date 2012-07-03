@@ -1042,8 +1042,13 @@ class InstanceActionLog(BASE, NovaBase):
     __tablename__ = 'instance_action_log'
     id = Column(Integer(), primary_key=True, autoincrement=True)
     instance_uuid = Column(String(36),
-                           ForeignKey('instances.uuid'),
-                           nullable=False)
+                           ForeignKey('instances.uuid'))
+    instance = relationship(Instance,
+                            backref=backref('instance_action_log'),
+                            foreign_keys=instance_uuid,
+                            primaryjoin='and_('
+                                'InstanceActionLog.instance_uuid == '
+                                     'Instance.uuid)')
     action_name = Column(String(255), nullable=False)
     requesting_ip = Column(String(255), nullable=False)
     response_code = Column(Integer, nullable=False)
